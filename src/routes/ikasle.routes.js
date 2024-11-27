@@ -4,7 +4,11 @@ const ikasleController = require('../controllers/ikasle.controller');
 
 router.get('/', ikasleController.getIkasleak);
 router.post('/', ikasleController.createIkasle);
+
 router.get('/:id', ikasleController.getIkasleById);
-// Gehitu beste routes-ak...
+router.put('/:id', ikasleController.editIkasle);
+router.delete('/:id', ikasleController.deleteIkasleByID);
+
+
 
 module.exports = router;

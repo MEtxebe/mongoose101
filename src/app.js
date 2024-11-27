@@ -7,6 +7,8 @@ const connectDB = require('./config/database');
 const ikasleRoutes = require('./routes/ikasle.routes');
 const errorHandler = require('./middleware/error.middleware');
 
+const taldeRoutes = require('./routes/talde.routes');
+
 const app = express();
 
 // MongoDB konexioa
@@ -24,6 +26,9 @@ app.use(express.static('public'));
 
 // Routes
 app.use('/api/ikasleak', ikasleRoutes);
+
+// Taldeak
+app.use('/api/taldeak', taldeRoutes);
 
 app.get('/', (req, res) => {
     res.render('index');

@@ -31,7 +31,7 @@ exports.getIkasleById = async (req, res, next) => {
     }
 };
 
-exports.deleteIkasle = async (req, res, next) => {
+exports.deleteIkasleByID = async (req, res, next) => {
     try {
         const ikasle = await Ikasle.findByIdAndDelete(req.params.id);
         if (!ikasle) {
@@ -45,17 +45,38 @@ exports.deleteIkasle = async (req, res, next) => {
 
 exports.editIkasle = async (req, res, next) => {
     try {
-        const ikasle = await Ikasle.findByIdAndUpdate
-            (req.params.id, req.body
-            , { new: true, runValidators: true });
+        const { email, izena, adina } = req.body; 
+        const ikasle = await Ikasle.findOneAndUpdate(
+            { email }, 
+            { izena, adina, email },  
+            { new: true, runValidators: true }
+        );
+        
         if (!ikasle) {
             return res.status(404).json({ message: 'Ikaslea ez da aurkitu' });
         }
-        res.json(ikasle);
-    }
-    catch (error) {
+
+        res.json(ikasle); 
+    } catch (error) {
         next(error);
     }
-}
+};
+
+// Añadir un endpoint para obtener un estudiante por su email
+exports.getIkasleByEmail = async (req, res, next) => {
+    try {
+        // Busca el ikasle por su email (no por el _id)
+        const ikasle = await Ikasle.findOne({ email: req.params.email });
+        
+        if (!ikasle) {
+            return res.status(404).json({ message: 'Ikaslea ez da aurkitu' });
+        }
+        
+        res.json(ikasle);  // Devuelve la respuesta con los datos del ikasle
+    } catch (error) {
+        next(error);  // Pasa el error al middleware de manejo de errores
+    }
+};
+
 
 // Gehitu beste kontroladoreak...

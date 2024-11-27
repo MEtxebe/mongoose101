@@ -31,35 +31,176 @@
 
 
         async function deleteIkasle() {
-            const izena = document.getElementById('izena').value;
-            const adina = document.getElementById('adina').value;
-            const email = document.getElementById('email').value;
+            const id = document.getElementById("deleteId").value;
 
-            const response = await fetch('/api/ikasleak', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ izena, adina, email })
+            const response = await fetch(`/api/ikasleak/${id}`, {
+            method: "DELETE",
             });
 
             const data = await response.json();
-            document.getElementById('newIkasle').innerText = JSON.stringify(data, null, 2);
+            document.getElementById("deletedIkasle").innerText = JSON.stringify(
+            data,
+            null,
+            2
+            );
         }
 
-        async function editIkasle() {
-            const izena = document.getElementById('izena').value;
-            const adina = document.getElementById('adina').value;
-            const email = document.getElementById('email').value;
 
-            const response = await fetch('/api/ikasleak', {
-                method: 'PUT',
+        async function loadIkasleak() {
+            const response = await fetch('/api/ikasleak');
+            const data = await response.json();
+            const select = document.getElementById('emailSelect');
+            const ikasleSelect = document.getElementById('ikasleSelect');
+
+            data.forEach(ikasle => {
+                const option = document.createElement('option');
+                option.value = ikasle.email;
+                option.textContent = ikasle.email;
+                select.appendChild(option);
+
+                const ikasleOption = document.createElement('option');
+                ikasleOption.value = ikasle._id;
+                ikasleOption.textContent = ikasle.email;
+                ikasleSelect.appendChild(ikasleOption);
+            
+                
+            });
+        }
+        async function populateFields() {
+            const email = document.getElementById('emailSelect').value;
+            if (!email) return;
+            
+            try {
+                const response = await fetch('/api/ikasleak');
+                const ikasleak = await response.json();
+                
+                // Buscar el ikasle con el email seleccionado
+                const ikasle = ikasleak.find(ikasle => ikasle.email === email);
+                
+                if (ikasle) {
+                    document.getElementById('editIzena').value = ikasle.izena;
+                    document.getElementById('editAdina').value = ikasle.adina;
+                    document.getElementById('editEmail').value = ikasle.email;
+                } else {
+                    console.error('No se encontró el ikasle');
+                    alert('No se encontró el ikasle con ese email');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al obtener los datos del ikasle');
+            }
+        }
+
+
+
+        async function editIkasle() {
+            const email = document.getElementById('editEmail').value;
+            const izena = document.getElementById('editIzena').value;
+            const adina = document.getElementById('editAdina').value;
+
+            try {
+                // Primero obtener el ID del ikasle usando el email
+                const getResponse = await fetch('/api/ikasleak');
+                const ikasleak = await getResponse.json();
+                const ikasle = ikasleak.find(i => i.email === email);
+
+                if (!ikasle) {
+                    throw new Error('No se encontró el ikasle con ese email');
+                }
+
+                // Hacer la petición PUT con el ID correcto
+                const response = await fetch(`/api/ikasleak/${ikasle._id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        izena,
+                        adina: Number(adina),
+                        email
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('editIkasle').innerText = 
+                        `Ikasle editatua: ${JSON.stringify(data, null, 2)}`;
+                    // Opcional: recargar la lista de ikasleak
+                    fetchIkasleak();
+                } else {
+                    throw new Error(data.message || 'Error al editar ikasle');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('editIkasle').innerText = 
+                    `Error: ${error.message}`;
+            }
+        }
+
+
+
+        async function createTalde() {
+            const taldeIzena = document.getElementById('taldeIzena').value;
+
+            const response = await fetch('/api/taldeak', { 
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ izena, adina, email })
+                body: JSON.stringify({ izena: taldeIzena })  // Enviar 'izena' como nombre del campo
+            });
+
+            const data = await response.json();
+            document.getElementById('newTalde').innerText = JSON.stringify(data, null, 2);
+        }
+
+    async function assignIkasleToTalde() {
+        const taldeId = document.getElementById('taldeSelect').value;
+        const ikasleId = document.getElementById('ikasleSelect').value;
+
+            const response = await fetch('/api/taldeak/assign', {  
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ taldeId, ikasleId })  
+            });
+
+            const data = await response.json();
+            document.getElementById('newAsing').innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function fetchTaldeak() {
+            const response = await fetch('/api/taldeak');  
+            const data = await response.json();
+            document.getElementById('taldeak').innerText = JSON.stringify(data, null, 2);
+    }
+
+
+    async function loadTaldeak() {
+            const response = await fetch('/api/taldeak');  
+            const data = await response.json();
+            const select = document.getElementById('taldeSelect');
+
+            data.forEach(talde => {
+                const option = document.createElement('option');
+                option.value = talde._id;
+                option.textContent = talde.izena;
+                select.appendChild(option);
             });
         }
+
+
+        window.onload = function() {
+            const kaxa = document.getElementById('emailSelect');
+            const ikasleSelect = document.getElementById('ikasleSelect');
+            loadIkasleak();
+            kaxa.addEventListener('change', populateFields);
+
+            const taldeKaxa = document.getElementById('taldeSelect');
+            loadTaldeak();
+        }
+
     </script>
 </head>
 <body>
@@ -81,31 +222,71 @@
         <button type="submit">Create</button>
     </form>
 
+    <pre id="newIkasle"></pre>
+
     <h2>Delete Ikasle</h2>
     <form onsubmit="event.preventDefault(); deleteIkasle();">
-        <label for="izena">Identifikazioa:</label>
-        <input type="text" id="izena" name="izena" required>
+        <label for="id">Ikasle ID:</label>
+        <input type="text" id="deleteId" name="id" required>
         <br>
         <button type="submit">Delete</button>
     </form>
+    
+    <pre id="deletedIkasle"></pre>
 
     <h2>Edit Ikasle</h2>
     <form onsubmit="event.preventDefault(); editIkasle();">
-        <label for="izena">Identifikazioa:</label>
-        <input type="text" id="id" name="ID" required>
+        <label for="emailSelect">Ikasle Email:</label>
+        <select id="emailSelect" onchange="populateFields()" required>
+            <option value="">--Selecciona un estudiante--</option>
+            <!-- Opciones se cargarán dinámicamente -->
+        </select>
         <br>
-        <label for="izena">Izen berria:</label>
-        <input type="text" id="izena" name="izena" required>
+        <label for="izena">Izena:</label>
+        <input type="text" id="editIzena" name="izena" required>
         <br>
+        <label for="adina">Adina:</label>
+        <input type="number" id="editAdina" name="adina" required>
         <br>
-        <label for="adina">Adin berria:</label>
-        <input type="number" id="adina" name="adina" required>
-        <br>
-        <label for="email">Email berria:</label>
-        <input type="email" id="email" name="email" required>
+        <label for="email">Email:</label>
+        <input type="email" id="editEmail" name="email" required>
         <br>
         <button type="submit">Edit</button>
     </form>
-    <pre id="newIkasle"></pre>
+    <pre id="editIkasle"></pre>
+    
+    <!--Create "Create Talde" "Asing Ikasle to Talse", and "Get Taldeak"-->
+    <h2>Create Talde</h2>
+    <form onsubmit="event.preventDefault(); createTalde();">
+        <label for="taldeIzena">Talde Izena:</label>
+        <input type="text" id="taldeIzena" name="taldeIzena" required>
+        <br>
+        <button type="submit">Create</button>
+    </form>
+    <pre id="newTalde"></pre>
+
+    <h2>Asing Ikasle to Talde</h2>
+    <form onsubmit="event.preventDefault(); assignIkasleToTalde();">
+
+        <label for="taldeSelect">Talde ID:</label>
+        <select id="taldeSelect" onchange="populateFields()" required>
+            <option value="">--Choose a talde--</option>
+            <!-- Opciones se cargarán dinámicamente -->
+        </select>
+        <br>
+        <label for="ikasleSelect">Ikasle Email:</label>
+        <select id="ikasleSelect" onchange="populateFields()" required>
+            <option value="">--Choose an ikasle--</option>
+            <!-- Opciones se cargarán dinámicamente -->
+        </select>
+        <br>
+        <button type="submit">Asing</button>
+    </form>
+    <pre id="newAsing"></pre>
+
+    <h2>Get Taldeak</h2>
+    <button onclick="fetchTaldeak()">Get Taldeak</button>
+    <pre id="taldeak"></pre>
+
 </body>
 </html>
